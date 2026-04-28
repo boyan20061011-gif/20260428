@@ -32,53 +32,60 @@ function draw() {
   // 設定背景顏色
   background('#e7c6ff');
 
-  // 計算影像寬高為畫布的 50%
-  let vWidth = width * 0.5;
-  let vHeight = height * 0.5;
+  // 計算顯示影像的尺寸 (畫布寬高的 60%)
+  let vWidth = width * 0.6;
+  let vHeight = height * 0.6;
   // 計算置中位移
-  let offsetX = (width - vWidth) / 2;
-  let offsetY = (height - vHeight) / 2;
+  let xOff = (width - vWidth) / 2;
+  let yOff = (height - vHeight) / 2;
 
-  // 繪製置中的影像
-  image(video, offsetX, offsetY, vWidth, vHeight);
+  // 在畫布中央繪製影像
+  image(video, xOff, yOff, vWidth, vHeight);
 
   // Ensure at least one hand is detected
   if (hands.length > 0 && video.width > 0) {
     for (let hand of hands) {
       if (hand.confidence > 0.1) {
-        // 根據左右手設定顏色
+        // 設定線條顏色（根據左右手）
         if (hand.handedness == "Left") {
           stroke(255, 0, 255);
-          fill(255, 0, 255);
         } else {
           stroke(255, 255, 0);
-          fill(255, 255, 0);
         }
+        strokeWeight(4);
 
-        // 繪製手指連線 (0-4, 5-8, 9-12, 13-16, 17-20)
-        let segments = [[0, 4], [5, 8], [9, 12], [13, 16], [17, 20]];
-        strokeWeight(5);
-        for (let seg of segments) {
-          for (let i = seg[0]; i < seg[1]; i++) {
-            let p1 = hand.keypoints[i];
-            let p2 = hand.keypoints[i + 1];
+        // 定義需要串接的指尖路徑
+        let fingerParts = [
+          [0, 1, 2, 3, 4],    // 大拇指
+          [5, 6, 7, 8],       // 食指
+          [9, 10, 11, 12],    // 中指
+          [13, 14, 15, 16],   // 無名指
+          [17, 18, 19, 20]    // 小指
+        ];
 
-            // 將攝影機座標映射到畫布上的影像區域
-            let x1 = map(p1.x, 0, video.width, offsetX, offsetX + vWidth);
-            let y1 = map(p1.y, 0, video.height, offsetY, offsetY + vHeight);
-            let x2 = map(p2.x, 0, video.width, offsetX, offsetX + vWidth);
-            let y2 = map(p2.y, 0, video.height, offsetY, offsetY + vHeight);
+        // 繪製手指連線
+        for (let part of fingerParts) {
+          for (let i = 0; i < part.length - 1; i++) {
+            let p1 = hand.keypoints[part[i]];
+            let p2 = hand.keypoints[part[i + 1]];
+
+            let x1 = map(p1.x, 0, video.width, xOff, xOff + vWidth);
+            let y1 = map(p1.y, 0, video.height, yOff, yOff + vHeight);
+            let x2 = map(p2.x, 0, video.width, xOff, xOff + vWidth);
+            let y2 = map(p2.y, 0, video.height, yOff, yOff + vHeight);
+
             line(x1, y1, x2, y2);
           }
         }
 
-        // 繪製關鍵點圓圈 (維持原本功能)
+        // 繪製關鍵點圓圈
         noStroke();
         for (let i = 0; i < hand.keypoints.length; i++) {
           let keypoint = hand.keypoints[i];
-          let x = map(keypoint.x, 0, video.width, offsetX, offsetX + vWidth);
-          let y = map(keypoint.y, 0, video.height, offsetY, offsetY + vHeight);
-          circle(x, y, 16);
+          let displayX = map(keypoint.x, 0, video.width, xOff, xOff + vWidth);
+          let displayY = map(keypoint.y, 0, video.height, yOff, yOff + vHeight);
+          fill(hand.handedness == "Left" ? [255, 0, 255] : [255, 255, 0]);
+          circle(displayX, displayY, 16);
         }
       }
     }
