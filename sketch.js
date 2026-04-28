@@ -82,7 +82,7 @@ function draw() {
   noStroke();
   textSize(32);
   textAlign(CENTER);
-  text("414730654魏伯諺", width / 2, 100);
+  text("414730654魏伯諺文字", width / 2, 100);
   pop();
 
   // Ensure at least one hand is detected
