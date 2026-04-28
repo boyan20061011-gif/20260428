@@ -1,30 +1,54 @@
-let capture;
+// Hand Pose Detection with ml5.js
+// https://thecodingtrain.com/tracks/ml5js-beginners-guide/ml5/hand-pose
+
+let video;
+let handPose;
+let hands = [];
+
+function preload() {
+  // Initialize HandPose model with flipped video input
+  handPose = ml5.handPose({ flipped: true });
+}
+
+function mousePressed() {
+  console.log(hands);
+}
+
+function gotHands(results) {
+  hands = results;
+}
 
 function setup() {
-  // 建立全螢幕畫布
-  createCanvas(windowWidth, windowHeight);
-  // 擷取攝影機影像
-  capture = createCapture(VIDEO);
-  // 隱藏原始的 HTML 影片元件，只顯示在畫布上
-  capture.hide();
+  createCanvas(640, 480);
+  video = createCapture(VIDEO, { flipped: true });
+  video.hide();
+
+  // Start detecting hands
+  handPose.detectStart(video, gotHands);
 }
 
 function draw() {
-  // 設定背景顏色
-  background('#e7c6ff');
+  image(video, 0, 0);
 
-  // 計算影像寬高為畫布的 50%
-  let vWidth = width * 0.5;
-  let vHeight = height * 0.5;
-  // 計算置中位置
-  let x = (width - vWidth) / 2;
-  let y = (height - vHeight) / 2;
+  // Ensure at least one hand is detected
+  if (hands.length > 0) {
+    for (let hand of hands) {
+      if (hand.confidence > 0.1) {
+        // Loop through keypoints and draw circles
+        for (let i = 0; i < hand.keypoints.length; i++) {
+          let keypoint = hand.keypoints[i];
 
-  // 繪製影像
-  image(capture, x, y, vWidth, vHeight);
-}
+          // Color-code based on left or right hand
+          if (hand.handedness == "Left") {
+            fill(255, 0, 255);
+          } else {
+            fill(255, 255, 0);
+          }
 
-function windowResized() {
-  // 當視窗大小改變時，重新調整畫布大小
-  resizeCanvas(windowWidth, windowHeight);
+          noStroke();
+          circle(keypoint.x, keypoint.y, 16);
+        }
+      }
+    }
+  }
 }
